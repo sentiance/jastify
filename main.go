@@ -5,9 +5,34 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"regexp"
+	"strings"
 
 	"github.com/fgm/jastify/converter"
 )
+
+// sanitizeResourceName converts a file path to a valid Terraform resource name
+func sanitizeResourceName(name string) string {
+	// Remove file extension and get base name
+	base := strings.TrimSuffix(filepath.Base(name), filepath.Ext(name))
+
+	// Replace invalid characters with underscores
+	reg := regexp.MustCompile(`[^a-zA-Z0-9_]`)
+	sanitized := reg.ReplaceAllString(base, "_")
+
+	// Ensure it starts with a letter or underscore
+	if len(sanitized) > 0 && !regexp.MustCompile(`^[a-zA-Z_]`).MatchString(sanitized) {
+		sanitized = "_" + sanitized
+	}
+
+	// Ensure it's not empty
+	if sanitized == "" {
+		sanitized = "resource"
+	}
+
+	return sanitized
+}
 
 func main() {
 	var (
@@ -31,7 +56,7 @@ func main() {
 			_, _ = fmt.Fprintln(os.Stderr, "Error reading file:", err)
 			os.Exit(1)
 		}
-		resourceName = os.Args[1]
+		resourceName = sanitizeResourceName(os.Args[1])
 	default:
 		_, _ = fmt.Fprintln(os.Stderr, "Usage: \nconvert < somefile.json\nor\nconvert somefile.json")
 		os.Exit(1)

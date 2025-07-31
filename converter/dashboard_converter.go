@@ -90,6 +90,7 @@ var FORMULA = map[string]stringFunc{
 			return Must(convertFromDefinition(FORMULA_LIMIT, k1, v1))
 		})
 	},
+	"number_format": blankGen, // unit field not supported in Terraform formula blocks
 }
 
 var FORMULA_LIMIT = map[string]stringFunc{
@@ -173,10 +174,16 @@ var REQUEST = map[string]stringFunc{
 		queries := Must(JmapsFromAny(v))
 		return queryBlockList(queries, assignmentString)
 	},
-	"response_format": stringGen("response_format"),
-	"rum_query":       stringGen("rum_query"),
-	"security_query":  stringGen("security_query"),
-	"show_present":    stringGen("show_present"),
+	"response_format": func(v any) string {
+		// Only allow event_list format as other formats (scalar, timeseries) cause Terraform errors
+		if format, ok := v.(string); ok && format == "event_list" {
+			return assignmentString("response_format", format)
+		}
+		return ""
+	},
+	"rum_query":      stringGen("rum_query"),
+	"security_query": stringGen("security_query"),
+	"show_present":   stringGen("show_present"),
 	"style": func(v any) string {
 		return blockList(Jmaps{v.(Jmap)}, "style", assignmentString)
 	},
@@ -244,42 +251,43 @@ func init() {
 			markers := Must(JmapsFromAny(v))
 			return blockList(markers, "marker", assignmentString)
 		},
-		"message_display":     stringGen("message_display"),
-		"no_group_hosts":      stringGen("no_group_hosts"),
-		"no_metric_hosts":     stringGen("no_metric_hosts"),
-		"node_type":           stringGen("node_type"),
-		"precision":           stringGen("precision"),
-		"query":               stringGen("query"),
-		"requests":            convertRequests,
-		"right_yaxis":         func(v any) string { return block("right_yaxis", v.(Jmap), assignmentString) },
-		"scope":               stringGen("scope"),
-		"service":             stringGen("service"),
-		"show_breakdown":      stringGen("show_breakdown"),
-		"show_date_column":    stringGen("show_date_column"),
-		"show_distribution":   stringGen("show_distribution"),
-		"show_error_budget":   stringGen("show_error_budget"),
-		"show_errors":         stringGen("show_errors"),
-		"show_hits":           stringGen("show_hits"),
-		"show_last_triggered": stringGen("show_last_triggered"),
-		"show_latency":        stringGen("show_latency"),
-		"show_legend":         stringGen("show_legend"),
-		"show_message_column": stringGen("show_message_column"),
-		"show_resource_list":  stringGen("show_resource_list"),
-		"show_tick":           stringGen("show_tick"),
-		"size_format":         stringGen("size_format"),
-		"sizing":              stringGen("sizing"),
-		"slo_id":              stringGen("slo_id"),
-		"sort":                convertSort,
-		"span_name":           stringGen("span_name"),
-		"start":               blankGen,
-		"style":               func(v any) string { return block("style", v.(Jmap), assignmentString) },
-		"summary_type":        stringGen("summary_type"),
-		"tags":                stringGen("tags"),
-		"tags_execution":      stringGen("tags_execution"),
-		"text":                stringGen("text"),
-		"text_align":          stringGen("text_align"),
-		"tick_edge":           stringGen("tick_edge"),
-		"tick_pos":            stringGen("tick_pos"),
+		"message_display":       stringGen("message_display"),
+		"no_group_hosts":        stringGen("no_group_hosts"),
+		"no_metric_hosts":       stringGen("no_metric_hosts"),
+		"node_type":             stringGen("node_type"),
+		"precision":             stringGen("precision"),
+		"query":                 stringGen("query"),
+		"requests":              convertRequests,
+		"right_yaxis":           func(v any) string { return block("right_yaxis", v.(Jmap), assignmentString) },
+		"scope":                 stringGen("scope"),
+		"service":               stringGen("service"),
+		"show_breakdown":        stringGen("show_breakdown"),
+		"show_date_column":      stringGen("show_date_column"),
+		"show_distribution":     stringGen("show_distribution"),
+		"show_error_budget":     stringGen("show_error_budget"),
+		"show_errors":           stringGen("show_errors"),
+		"show_hits":             stringGen("show_hits"),
+		"show_last_triggered":   stringGen("show_last_triggered"),
+		"show_latency":          stringGen("show_latency"),
+		"show_legend":           stringGen("show_legend"),
+		"show_message_column":   stringGen("show_message_column"),
+		"show_resource_list":    stringGen("show_resource_list"),
+		"show_tick":             stringGen("show_tick"),
+		"size_format":           stringGen("size_format"),
+		"sizing":                stringGen("sizing"),
+		"slo_id":                stringGen("slo_id"),
+		"sort":                  convertSort,
+		"span_name":             stringGen("span_name"),
+		"start":                 blankGen,
+		"style":                 func(v any) string { return block("style", v.(Jmap), assignmentString) },
+		"summary_type":          stringGen("summary_type"),
+		"tags":                  stringGen("tags"),
+		"tags_execution":        stringGen("tags_execution"),
+		"text":                  stringGen("text"),
+		"text_align":            stringGen("text_align"),
+		"tick_edge":             stringGen("tick_edge"),
+		"tick_pos":              stringGen("tick_pos"),
+		"timeseries_background": func(v any) string { return block("timeseries_background", v.(Jmap), assignmentString) },
 		"time": func(v any) string {
 			if liveSpan, ok := v.(Jmap)["live_span"]; ok {
 				return assignmentString("live_span", liveSpan)
